@@ -162,6 +162,15 @@ fi
 find ~ -type f \( -name "*.zip" -o -name "*.tar" -o -name "*.gz" -o -name "*.bz2" \) -exec rm -f {} +
 if [ $? -eq 0 ]; then
     print_success "Archivos temporales eliminados."
+
+# Set Zsh as the default shell
+if [ "$SHELL" != "$(which zsh)" ]; then
+    echo "Changing default shell to Zsh..."
+    chsh -s "$(which zsh)"
+    echo "Default shell changed to Zsh. You may need to log out and log back in for the changes to take effect."
+else
+    echo "Zsh is already set as the default shell."
+fi
 else
     print_error "Error al eliminar archivos temporales."
 fi
