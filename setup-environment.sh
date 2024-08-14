@@ -1,133 +1,181 @@
 #!/bin/bash
 
-# Definir códigos de colores
+# Define color codes
 GREEN='\033[0;32m'
 RED='\033[0;31m'
-NC='\033[0m' # Sin color
+BLUE='\033[0;34m'
+NC='\033[0m' # No color
 
-# Función para imprimir mensajes en verde
+# Function to print success messages in green
 print_success() {
     echo -e "${GREEN}$1${NC}"
 }
 
-# Función para imprimir mensajes en rojo
+# Function to print error messages in red
 print_error() {
     echo -e "${RED}$1${NC}"
 }
 
-# Preguntar si se desea instalar la interfaz gráfica
-read -p "¿Deseas instalar una interfaz gráfica (Wubuntu)? (s/n): " instalar_gui
-if [ "$instalar_gui" == "s" ]; then
-    sudo apt-get update && sudo apt-get install -y xubuntu-desktop
-    if [ $? -eq 0 ]; then
-        print_success "Interfaz gráfica instalada."
-    else
-        print_error "Error al instalar la interfaz gráfica."
-    fi
-else
-    echo "No se instalará la interfaz gráfica."
-fi
+# Function to print informational messages in blue
+print_info() {
+    echo -e "${BLUE}$1${NC}"
+}
 
-# Instalar Zsh
+# Ask which graphical environment to install
+echo "Select a graphical environment to install:"
+echo "1. Xubuntu Desktop (Full-featured)"
+print_info "  (Heavier, more features)"
+echo "2. Xubuntu Core (Minimal)"
+print_info "  (Lighter, fewer features)"
+echo "3. Lubuntu Desktop (Lightweight)"
+print_info "  (Lightweight, faster performance)"
+echo "4. LXDE Desktop (Very Lightweight)"
+print_info "  (Very lightweight, basic interface)"
+echo "5. No graphical environment"
+
+read -p "Enter your choice (1/2/3/4/5): " choice
+
+case $choice in
+    1)
+        sudo apt-get update && sudo apt-get install -y xubuntu-desktop
+        if [ $? -eq 0 ]; then
+            print_success "Xubuntu Desktop installed."
+        else
+            print_error "Error installing Xubuntu Desktop."
+        fi
+        ;;
+    2)
+        sudo apt-get update && sudo apt-get install -y xubuntu-core
+        if [ $? -eq 0 ]; then
+            print_success "Xubuntu Core installed."
+        else
+            print_error "Error installing Xubuntu Core."
+        fi
+        ;;
+    3)
+        sudo apt-get update && sudo apt-get install -y lubuntu-desktop
+        if [ $? -eq 0 ]; then
+            print_success "Lubuntu Desktop installed."
+        else
+            print_error "Error installing Lubuntu Desktop."
+        fi
+        ;;
+    4)
+        sudo apt-get update && sudo apt-get install -y lxde
+        if [ $? -eq 0 ]; then
+            print_success "LXDE Desktop installed."
+        else
+            print_error "Error installing LXDE Desktop."
+        fi
+        ;;
+    5)
+        echo "No graphical environment will be installed."
+        ;;
+    *)
+        print_error "Invalid choice. No graphical environment will be installed."
+        ;;
+esac
+
+# Install Zsh
 sudo apt-get install -y zsh
 if [ $? -eq 0 ]; then
-    print_success "Zsh instalado."
+    print_success "Zsh installed."
 else
-    print_error "Error al instalar Zsh."
+    print_error "Error installing Zsh."
 fi
 
-# Instalar Oh My Zsh
+# Install Oh My Zsh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 if [ $? -eq 0 ]; then
-    print_success "Oh My Zsh instalado."
+    print_success "Oh My Zsh installed."
 else
-    print_error "Error al instalar Oh My Zsh."
+    print_error "Error installing Oh My Zsh."
 fi
 
-# Instalar Hack Nerd Font
+# Install Hack Nerd Font
 wget -qO- https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Hack.zip -O Hack.zip
 unzip Hack.zip -d ~/.fonts
 fc-cache -fv
 rm Hack.zip
 if [ $? -eq 0 ]; then
-    print_success "Hack Nerd Font instalada."
+    print_success "Hack Nerd Font installed."
 else
-    print_error "Error al instalar Hack Nerd Font."
+    print_error "Error installing Hack Nerd Font."
 fi
 
-# Instalar MesloLGS NF
+# Install MesloLGS NF
 wget -qO- https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Meslo.zip -O Meslo.zip
 unzip Meslo.zip -d ~/.fonts
 fc-cache -fv
 rm Meslo.zip
 if [ $? -eq 0 ]; then
-    print_success "MesloLGS NF instalada."
+    print_success "MesloLGS NF installed."
 else
-    print_error "Error al instalar MesloLGS NF."
+    print_error "Error installing MesloLGS NF."
 fi
 
-# Instalar Powerlevel10k
+# Install Powerlevel10k
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
 if [ $? -eq 0 ]; then
     echo 'source ~/powerlevel10k/powerlevel10k.zsh-theme' >>~/.zshrc
-    print_success "Powerlevel10k instalado y configurado."
+    print_success "Powerlevel10k installed and configured."
 else
-    print_error "Error al instalar Powerlevel10k."
+    print_error "Error installing Powerlevel10k."
 fi
 
-# Instalar Zsh Autosuggestions
+# Install Zsh Autosuggestions
 git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
 if [ $? -eq 0 ]; then
     echo "source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" >>~/.zshrc
-    print_success "Zsh Autosuggestions instalado y configurado."
+    print_success "Zsh Autosuggestions installed and configured."
 else
-    print_error "Error al instalar Zsh Autosuggestions."
+    print_error "Error installing Zsh Autosuggestions."
 fi
 
-# Instalar Zsh Syntax Highlighting
+# Install Zsh Syntax Highlighting
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/zsh-syntax-highlighting
 if [ $? -eq 0 ]; then
     echo "source ~/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" >>~/.zshrc
-    print_success "Zsh Syntax Highlighting instalado y configurado."
+    print_success "Zsh Syntax Highlighting installed and configured."
 else
-    print_error "Error al instalar Zsh Syntax Highlighting."
+    print_error "Error installing Zsh Syntax Highlighting."
 fi
 
-# Instalar LSD
+# Install LSD
 sudo apt-get install -y lsd
 if [ $? -eq 0 ]; then
-    print_success "LSD instalado."
+    print_success "LSD installed."
 else
-    print_error "Error al instalar LSD."
+    print_error "Error installing LSD."
 fi
 
-# Instalar Batcat
+# Install Batcat
 sudo apt-get install -y bat
 if [ $? -eq 0 ]; then
-    print_success "Batcat instalado."
+    print_success "Batcat installed."
 else
-    print_error "Error al instalar Batcat."
+    print_error "Error installing Batcat."
 fi
 
-# Instalar Neovim
+# Install Neovim
 wget -qO- https://github.com/neovim/neovim/releases/download/v0.10.0/nvim-linux64.tar.gz -O nvim-linux64.tar.gz
 tar xzvf nvim-linux64.tar.gz -C ~/
 rm nvim-linux64.tar.gz
 if [ $? -eq 0 ]; then
-    print_success "Neovim instalado."
+    print_success "Neovim installed."
 else
-    print_error "Error al instalar Neovim."
+    print_error "Error installing Neovim."
 fi
 
-# Instalar NvChad
+# Install NvChad
 git clone https://github.com/NvChad/starter ~/.config/nvim
 if [ $? -eq 0 ]; then
-    print_success "NvChad instalado."
+    print_success "NvChad installed."
 else
-    print_error "Error al instalar NvChad."
+    print_error "Error installing NvChad."
 fi
 
-# Configurar aliases
+# Configure aliases
 {
     echo "alias ls='lsd'"
     echo "alias ll='lsd -l'"
@@ -139,39 +187,41 @@ fi
 } >> ~/.zshrc
 
 if [ $? -eq 0 ]; then
-    print_success "Aliases configurados."
+    print_success "Aliases configured."
 else
-    print_error "Error al configurar los aliases."
+    print_error "Error configuring aliases."
 fi
 
-# Ejecutar comandos dentro de nvim
-echo "Esperando a que lazy.nvim descargue los plugins..."
-sleep 30 # Esperar un momento para asegurarse de que los plugins se hayan descargado
+# Run Neovim commands
+echo "Waiting for lazy.nvim to download plugins..."
+sleep 30 # Wait a moment to ensure plugins are downloaded
 
-# Ejecutar comandos de configuración en Neovim
+# Run configuration commands in Neovim
 nvim -c 'MasonInstallAll' -c 'qa'
 if [ $? -eq 0 ]; then
     rm -rf ~/.config/nvim/.git
     nvim -c ':Lazy sync' -c 'qa'
-    print_success "Configuración de Neovim completada."
+    print_success "Neovim configuration completed."
 else
-    print_error "Error al configurar Neovim."
+    print_error "Error configuring Neovim."
 fi
 
-# Limpiar archivos temporales
+# Clean up temporary files
 find ~ -type f \( -name "*.zip" -o -name "*.tar" -o -name "*.gz" -o -name "*.bz2" \) -exec rm -f {} +
 if [ $? -eq 0 ]; then
-    print_success "Archivos temporales eliminados."
+    print_success "Temporary files removed."
 
-# Set Zsh as the default shell
-if [ "$SHELL" != "$(which zsh)" ]; then
-    echo "Changing default shell to Zsh..."
-    chsh -s "$(which zsh)"
-    echo "Default shell changed to Zsh. You may need to log out and log back in for the changes to take effect."
+    # Set Zsh as the default shell
+    if [ "$SHELL" != "$(which zsh)" ]; then
+        echo "Changing default shell to Zsh..."
+        chsh -s "$(which zsh)"
+        echo "Default shell changed to Zsh. You may need to log out and log back in for the changes to take effect."
+    else
+        echo "Zsh is already set as the default shell."
+    fi
 else
-    echo "Zsh is already set as the default shell."
+    print_error "Error removing temporary files."
 fi
-else
-    print_error "Error al eliminar archivos temporales."
-fi
+
+
 
