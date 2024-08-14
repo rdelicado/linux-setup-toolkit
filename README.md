@@ -47,11 +47,10 @@ This repository provides a script to automate the setup of a development environ
 2. **Run the Setup Script**
    Make the script executable and run it:
 
-```bash
-Copiar código
-chmod +x setup-environment.sh
-./setup-environment.sh
-```
+   ```bash
+   chmod +x setup-environment.sh
+   ./setup-environment.sh
+   ```
    The script will prompt you to decide whether to install a graphical interface and will then proceed with the installation of the tools listed above.
 
 3. **Follow Additional Prompts**
