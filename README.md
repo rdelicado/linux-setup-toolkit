@@ -43,51 +43,53 @@ This repository provides a script to automate the setup of a development environ
    ```bash
    git clone <repository-url>
    cd <repository-directory>
-Run the Setup Script
-Make the script executable and run it:
+   ```
+2. **Run the Setup Script**
+   Make the script executable and run it:
 
-bash
+```bash
 Copiar código
 chmod +x setup-environment.sh
 ./setup-environment.sh
-The script will prompt you to decide whether to install a graphical interface and will then proceed with the installation of the tools listed above.
+```
+   The script will prompt you to decide whether to install a graphical interface and will then proceed with the installation of the tools listed above.
 
-Follow Additional Prompts
-During the script execution, you may need to follow additional prompts to complete the setup of Neovim and other tools.
+3. **Follow Additional Prompts**
+   During the script execution, you may need to follow additional prompts to complete the setup of Neovim and other tools.
 
-Clean Up
-The script will automatically remove temporary files such as downloaded archives to keep your environment clean.
+4. **Clean Up**
+   The script will automatically remove temporary files such as downloaded archives to keep your environment clean.
 
-Post-Installation
-After running the script, you will have:
+5. **Post-Installation**
+   After running the script, you will have:
+   - A customized Zsh setup with Oh My Zsh, Powerlevel10k, and useful plugins.
+   - An enhanced terminal experience with Nerd Fonts, LSD, and Batcat.
+   - A fully configured Neovim editor with the NvChad setup.
+   
+5. **Aliases Configuration**
+   The script sets up several aliases in your ~/.zshrc file to enhance your terminal experience:
 
-A customized Zsh setup with Oh My Zsh, Powerlevel10k, and useful plugins.
-An enhanced terminal experience with Nerd Fonts, LSD, and Batcat.
-A fully configured Neovim editor with the NvChad setup.
-Aliases Configuration
-The script sets up several aliases in your ~/.zshrc file to enhance your terminal experience:
+      - ls → lsd: Use lsd for a more visually appealing directory listing.
+      - ll → lsd -l: Use lsd -l for a detailed directory listing.
+      - la → lsd -la: Use lsd -la for a detailed directory listing including hidden files.
+      - cat → batcat: Use batcat for a cat command with syntax highlighting and line numbers.
+      - catn → /bin/cat: Use catn to call the traditional cat command.
+      - vi → ~/nvim-linux64/bin/nvim: Use vi as an alias for Neovim.
+      - nvim → ~/nvim-linux64/bin/nvim: Use nvim to launch Neovim.
+   These aliases provide convenient shortcuts for commonly used commands and tools.
 
-ls → lsd: Use lsd for a more visually appealing directory listing.
-ll → lsd -l: Use lsd -l for a detailed directory listing.
-la → lsd -la: Use lsd -la for a detailed directory listing including hidden files.
-cat → batcat: Use batcat for a cat command with syntax highlighting and line numbers.
-catn → /bin/cat: Use catn to call the traditional cat command.
-vi → ~/nvim-linux64/bin/nvim: Use vi as an alias for Neovim.
-nvim → ~/nvim-linux64/bin/nvim: Use nvim to launch Neovim.
-These aliases provide convenient shortcuts for commonly used commands and tools.
-
-Contributions
+**Contributions**
 Contributions to improve the script or add additional features are welcome. Please fork the repository, make your changes, and submit a pull request.
 
-License
+**License**
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-Contact
+**Contact**
 For any questions or support, please contact rdelicad.
 
 
 **Note:**
-- Replace `<repository-url>` and `<repository-directory>` with the actual URL and directory name for your repository.
+- Replace github.com/rdelicad and github.com/rdelicad/linux-setup-tookit with the actual URL and directory name for your repository.
 - Ensure that the email address in the contact section is correct, and adjust it as needed.
 
 This updated `README.md` now includes a section explaining the aliases and provides contact details as requested.
