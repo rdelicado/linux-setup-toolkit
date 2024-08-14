@@ -21,9 +21,48 @@ print_info() {
     echo -e "${BLUE}$1${NC}"
 }
 
-# Check if a package is already installed
-is_installed() {
-    dpkg -l | grep -qw $1
+# Function to install a package if not already installed
+install_if_not_installed() {
+    local package=$1
+    local install_command=$2
+
+    if ! dpkg -l | grep -qw $package; then
+        echo "Installing $package..."
+        sudo apt-get update && sudo apt-get install -y $package
+        if [ $? -eq 0 ]; then
+            print_success "$package installed."
+        else
+            print_error "Error installing $package."
+        fi
+    else
+        print_success "$package is already installed."
+    fi
+}
+
+# Function to install a package using 'expect'
+install_with_expect() {
+    local package=$1
+    local install_command=$2
+
+    if ! dpkg -l | grep -qw $package; then
+        # Install 'expect' if not already installed
+        install_if_not_installed expect
+
+        echo "Automating $install_command installation..."
+        expect <<EOF
+spawn sh -c "$install_command"
+expect "Do you want to change your default shell to zsh?"
+send "Y\r"
+expect eof
+EOF
+        if [ $? -eq 0 ]; then
+            print_success "$package installed and configured."
+        else
+            print_error "Error installing $package."
+        fi
+    else
+        print_success "$package is already installed."
+    fi
 }
 
 # Ask which graphical environment to install
@@ -42,52 +81,16 @@ read -p "Enter your choice (1/2/3/4/5): " choice
 
 case $choice in
     1)
-        if ! is_installed xubuntu-desktop; then
-            sudo apt-get update && sudo apt-get install -y xubuntu-desktop
-            if [ $? -eq 0 ]; then
-                print_success "Xubuntu Desktop installed."
-            else
-                print_error "Error installing Xubuntu Desktop."
-            fi
-        else
-            print_success "Xubuntu Desktop is already installed."
-        fi
+        install_if_not_installed xubuntu-desktop
         ;;
     2)
-        if ! is_installed xubuntu-core; then
-            sudo apt-get update && sudo apt-get install -y xubuntu-core
-            if [ $? -eq 0 ]; then
-                print_success "Xubuntu Core installed."
-            else
-                print_error "Error installing Xubuntu Core."
-            fi
-        else
-            print_success "Xubuntu Core is already installed."
-        fi
+        install_if_not_installed xubuntu-core
         ;;
     3)
-        if ! is_installed lubuntu-desktop; then
-            sudo apt-get update && sudo apt-get install -y lubuntu-desktop
-            if [ $? -eq 0 ]; then
-                print_success "Lubuntu Desktop installed."
-            else
-                print_error "Error installing Lubuntu Desktop."
-            fi
-        else
-            print_success "Lubuntu Desktop is already installed."
-        fi
+        install_if_not_installed lubuntu-desktop
         ;;
     4)
-        if ! is_installed lxde; then
-            sudo apt-get update && sudo apt-get install -y lxde
-            if [ $? -eq 0 ]; then
-                print_success "LXDE Desktop installed."
-            else
-                print_error "Error installing LXDE Desktop."
-            fi
-        else
-            print_success "LXDE Desktop is already installed."
-        fi
+        install_if_not_installed lxde
         ;;
     5)
         echo "No graphical environment will be installed."
@@ -98,33 +101,15 @@ case $choice in
 esac
 
 # Install Zsh if not already installed
-if ! is_installed zsh; then
-    sudo apt-get install -y zsh
-    if [ $? -eq 0 ]; then
-        print_success "Zsh installed."
-    else
-        print_error "Error installing Zsh."
-    fi
-else
-    print_success "Zsh is already installed."
-fi
+install_if_not_installed zsh
 
-# Install Oh My Zsh if not already installed
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    if [ $? -eq 0 ]; then
-        print_success "Oh My Zsh installed."
-    else
-        print_error "Error installing Oh My Zsh."
-    fi
-else
-    print_success "Oh My Zsh is already installed."
-fi
+# Install Oh My Zsh with expect to automate shell change prompt
+install_with_expect "Oh My Zsh" "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # Install Hack Nerd Font if not already installed
 if [ ! -f "$HOME/.fonts/Hack-Regular.ttf" ]; then
     wget -qO- https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Hack.zip -O Hack.zip
-    unzip Hack.zip -d ~/.fonts
+    yes | unzip Hack.zip -d ~/.fonts
     fc-cache -fv
     rm Hack.zip
     if [ $? -eq 0 ]; then
@@ -139,7 +124,7 @@ fi
 # Install MesloLGS NF if not already installed
 if [ ! -f "$HOME/.fonts/MesloLG.ttf" ]; then
     wget -qO- https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Meslo.zip -O Meslo.zip
-    unzip Meslo.zip -d ~/.fonts
+    yes | unzip Meslo.zip -d ~/.fonts
     fc-cache -fv
     rm Meslo.zip
     if [ $? -eq 0 ]; then
@@ -191,28 +176,10 @@ else
 fi
 
 # Install LSD if not already installed
-if ! is_installed lsd; then
-    sudo apt-get install -y lsd
-    if [ $? -eq 0 ]; then
-        print_success "LSD installed."
-    else
-        print_error "Error installing LSD."
-    fi
-else
-    print_success "LSD is already installed."
-fi
+install_if_not_installed lsd
 
 # Install Batcat if not already installed
-if ! is_installed bat; then
-    sudo apt-get install -y bat
-    if [ $? -eq 0 ]; then
-        print_success "Batcat installed."
-    else
-        print_error "Error installing Batcat."
-    fi
-else
-    print_success "Batcat is already installed."
-fi
+install_if_not_installed bat
 
 # Install Neovim if not already installed
 if [ ! -d "$HOME/nvim-linux64" ]; then
@@ -245,24 +212,24 @@ if ! grep -q "alias ls='lsd'" ~/.zshrc; then
         print_error "Error configuring aliases."
     fi
 else
-    print_success "
-
+    print_success "Aliases are already configured."
+fi
 
 # Clean up temporary files
 find ~ -type f \( -name "*.zip" -o -name "*.tar" -o -name "*.gz" -o -name "*.bz2" \) -exec rm -f {} +
 if [ $? -eq 0 ]; then
     print_success "Temporary files removed."
-
-    # Set Zsh as the default shell
-    if [ "$SHELL" != "$(which zsh)" ]; then
-        echo "Changing default shell to Zsh..."
-        chsh -s "$(which zsh)"
-        echo "Default shell changed to Zsh. You may need to log out and log back in for the changes to take effect."
-    else
-        echo "Zsh is already set as the default shell."
-    fi
 else
     print_error "Error removing temporary files."
+fi
+
+# Set Zsh as the default shell if not already set
+if [ "$SHELL" != "$(which zsh)" ]; then
+    echo "Changing default shell to Zsh..."
+    chsh -s "$(which zsh)"
+    echo "Default shell changed to Zsh. You may need to log out and log back in for the changes to take effect."
+else
+    echo "Zsh is already set as the default shell."
 fi
 
 
