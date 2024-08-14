@@ -85,10 +85,3 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 **Contact**
 For any questions or support, please contact rdelicad.
-
-
-**Note:**
-- Replace github.com/rdelicad and github.com/rdelicad/linux-setup-tookit with the actual URL and directory name for your repository.
-- Ensure that the email address in the contact section is correct, and adjust it as needed.
-
-This updated `README.md` now includes a section explaining the aliases and provides contact details as requested.
