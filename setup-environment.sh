@@ -47,8 +47,12 @@ install_kitty() {
         if [ $? -eq 0 ]; then
             print_success "Kitty instalado."
 
+            # Crear el directorio ~/.local/bin si no existe
+            mkdir -p ~/.local/bin
+
             # Crear enlaces simbólicos para kitty y kitten en el PATH
-            ln -sf ~/.local/kitty.app/bin/kitty ~/.local/kitty.app/bin/kitten ~/.local/bin/
+            ln -sf ~/.local/kitty.app/bin/kitty ~/.local/bin/
+            ln -sf ~/.local/kitty.app/bin/kitten ~/.local/bin/
 
             # Integrar Kitty en el escritorio y menú de aplicaciones
             cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
