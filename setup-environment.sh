@@ -24,7 +24,6 @@ print_info() {
 # Function to install a package if not already installed
 install_if_not_installed() {
     local package=$1
-    local install_command=$2
 
     if ! dpkg -l | grep -qw $package; then
         echo "Installing $package..."
@@ -39,45 +38,69 @@ install_if_not_installed() {
     fi
 }
 
-# Function to install a package using 'expect'
-install_with_expect() {
-    local package=$1
-    local install_command=$2
-
-    if ! dpkg -l | grep -qw $package; then
-        # Install 'expect' if not already installed
-        install_if_not_installed expect
-
-        echo "Automating $install_command installation..."
-        expect <<EOF
-spawn sh -c "$install_command"
-expect "Do you want to change your default shell to zsh?"
-send "Y\r"
-expect eof
-EOF
-        if [ $? -eq 0 ]; then
-            print_success "$package installed and configured."
+# Function to install Kitty terminal
+install_kitty() {
+    print_info "Kitty es un emulador de terminal gráfico rápido y con muchas funciones."
+    read -p "¿Deseas instalar Kitty en este sistema? (y/n): " install_kitty
+    if [[ "$install_kitty" == "y" || "$install_kitty" == "Y" ]]; then
+        if [ ! -d "$HOME/.local/kitty.app" ]; then
+            print_info "Instalando Kitty..."
+            curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin
+            if [ $? -eq 0 ]; then
+                # Crear enlaces simbólicos
+                ln -sf ~/.local/kitty.app/bin/kitty ~/.local/kitty.app/bin/kitten ~/.local/bin/
+                cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
+                cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
+                sed -i "s|Icon=kitty|Icon=$(readlink -f ~)/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
+                sed -i "s|Exec=kitty|Exec=$(readlink -f ~)/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
+                echo 'kitty.desktop' > ~/.config/xdg-terminals.list
+                print_success "Kitty instalado y configurado."
+            else
+                print_error "Error al instalar Kitty."
+            fi
         else
-            print_error "Error installing $package."
+            print_success "Kitty ya está instalado."
         fi
     else
-        print_success "$package is already installed."
+        print_info "Instalación de Kitty omitida."
     fi
 }
 
-# Ask which graphical environment to install
-echo "Select a graphical environment to install:"
-echo "1. Xubuntu Desktop (Full-featured)"
-print_info "  (Heavier, more features)"
-echo "2. Xubuntu Core (Minimal)"
-print_info "  (Lighter, fewer features)"
-echo "3. Lubuntu Desktop (Lightweight)"
-print_info "  (Lightweight, faster performance)"
-echo "4. LXDE Desktop (Very Lightweight)"
-print_info "  (Very lightweight, basic interface)"
-echo "5. No graphical environment"
+# Function to install a font if not already installed
+install_font_if_not_installed() {
+    local font_name=$1
+    local font_url=$2
+    local font_file=$3
 
-read -p "Enter your choice (1/2/3/4/5): " choice
+    if [ ! -f "$HOME/.fonts/$font_file" ]; then
+        print_info "Instalando la fuente $font_name..."
+        wget -qO- $font_url -O "$font_name.zip"
+        yes | unzip "$font_name.zip" -d ~/.fonts
+        fc-cache -fv
+        rm "$font_name.zip"
+        if [ $? -eq 0 ]; then
+            print_success "$font_name instalado."
+        else
+            print_error "Error al instalar $font_name."
+        fi
+    else
+        print_success "La fuente $font_name ya está instalada."
+    fi
+}
+
+# Seleccionar entorno gráfico para instalar
+echo "Selecciona un entorno gráfico para instalar:"
+echo "1. Xubuntu Desktop (Completo)"
+print_info "  (Más pesado, más funciones)"
+echo "2. Xubuntu Core (Minimal)"
+print_info "  (Más ligero, menos funciones)"
+echo "3. Lubuntu Desktop (Ligero)"
+print_info "  (Ligero, mejor rendimiento)"
+echo "4. LXDE Desktop (Muy ligero)"
+print_info "  (Muy ligero, interfaz básica)"
+echo "5. No instalar entorno gráfico"
+
+read -p "Ingresa tu elección (1/2/3/4/5): " choice
 
 case $choice in
     1)
@@ -93,12 +116,20 @@ case $choice in
         install_if_not_installed lxde
         ;;
     5)
-        echo "No graphical environment will be installed."
+        echo "No se instalará un entorno gráfico."
         ;;
     *)
-        print_error "Invalid choice. No graphical environment will be installed."
+        print_error "Opción no válida. No se instalará un entorno gráfico."
         ;;
 esac
+
+# Llamar a la función para instalar Kitty
+install_kitty
+
+# Instalar fuentes si no están instaladas
+install_font_if_not_installed "Hack Nerd Font" "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Hack.zip" "Hack-Regular.ttf"
+install_font_if_not_installed "MesloLGS NF" "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Meslo.zip" "MesloLG.ttf"
+
 
 # Install Zsh if not already installed
 install_if_not_installed zsh
@@ -231,26 +262,3 @@ if [ "$SHELL" != "$(which zsh)" ]; then
 else
     echo "Zsh is already set as the default shell."
 fi
-
-# Function to install VirtualBox Guest Additions
-install_guest_additions() {
-    print_info "VirtualBox Guest Additions can enhance the performance of your VM."
-    read -p "Would you like to install VirtualBox Guest Additions for Ubuntu/Debian-based systems? (y/n): " install_guest
-    if [[ "$install_guest" == "y" || "$install_guest" == "Y" ]]; then
-        install_if_not_installed build-essential
-        install_if_not_installed dkms
-        install_if_not_installed linux-headers-$(uname -r)
-        print_info "Please insert the VirtualBox Guest Additions CD through the VirtualBox menu."
-        read -p "Press Enter to continue after inserting the CD..."
-        sudo mount /dev/cdrom /media/cdrom
-        sudo sh /media/cdrom/VBoxLinuxAdditions.run
-        if [ $? -eq 0 ]; then
-            print_success "VirtualBox Guest Additions installed successfully."
-        else
-            print_error "Error installing VirtualBox Guest Additions."
-        fi
-        sudo umount /media/cdrom
-    else
-        print_info "Skipping VirtualBox Guest Additions installation."
-    fi
-}
