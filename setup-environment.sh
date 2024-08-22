@@ -1,70 +1,84 @@
 #!/bin/bash
 
-# Define color codes
+# Definir códigos de color
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No color
+NC='\033[0m' # Sin color
 
-# Function to print success messages in green
+# Función para imprimir mensajes de éxito en verde
 print_success() {
     echo -e "${GREEN}$1${NC}"
 }
 
-# Function to print error messages in red
+# Función para imprimir mensajes de error en rojo
 print_error() {
     echo -e "${RED}$1${NC}"
 }
 
-# Function to print informational messages in blue
+# Función para imprimir mensajes informativos en azul
 print_info() {
     echo -e "${BLUE}$1${NC}"
 }
 
-# Function to install a package if not already installed
+# Función para instalar un paquete si no está instalado
 install_if_not_installed() {
     local package=$1
+    local install_command=$2
 
     if ! dpkg -l | grep -qw $package; then
-        echo "Installing $package..."
+        echo "Instalando $package..."
         sudo apt-get update && sudo apt-get install -y $package
         if [ $? -eq 0 ]; then
-            print_success "$package installed."
+            print_success "$package instalado."
         else
-            print_error "Error installing $package."
+            print_error "Error instalando $package."
         fi
     else
-        print_success "$package is already installed."
+        print_success "$package ya está instalado."
     fi
 }
 
-# Function to install Kitty terminal
+# Función para instalar Kitty
 install_kitty() {
-    print_info "Kitty es un emulador de terminal gráfico rápido y con muchas funciones."
-    read -p "¿Deseas instalar Kitty en este sistema? (y/n): " install_kitty
-    if [[ "$install_kitty" == "y" || "$install_kitty" == "Y" ]]; then
-        if [ ! -d "$HOME/.local/kitty.app" ]; then
-            print_info "Instalando Kitty..."
-            curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin
-            if [ $? -eq 0 ]; then
-                # Crear enlaces simbólicos
-                ln -sf ~/.local/kitty.app/bin/kitty ~/.local/kitty.app/bin/kitten ~/.local/bin/
-                cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
-                cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
-                sed -i "s|Icon=kitty|Icon=$(readlink -f ~)/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
-                sed -i "s|Exec=kitty|Exec=$(readlink -f ~)/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
-                echo 'kitty.desktop' > ~/.config/xdg-terminals.list
-                print_success "Kitty instalado y configurado."
-            else
-                print_error "Error al instalar Kitty."
-            fi
+    if [ ! -d "$HOME/.local/kitty.app" ]; then
+        print_info "Instalando Kitty..."
+        curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin
+        if [ $? -eq 0 ]; then
+            print_success "Kitty instalado."
+
+            # Crear enlaces simbólicos para kitty y kitten en el PATH
+            ln -sf ~/.local/kitty.app/bin/kitty ~/.local/kitty.app/bin/kitten ~/.local/bin/
+
+            # Integrar Kitty en el escritorio y menú de aplicaciones
+            cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
+            cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
+
+            # Actualizar los iconos y la ruta de ejecución en los archivos .desktop
+            sed -i "s|Icon=kitty|Icon=$(readlink -f ~)/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g" ~/.local/share/applications/kitty*.desktop
+            sed -i "s|Exec=kitty|Exec=$(readlink -f ~)/.local/kitty.app/bin/kitty|g" ~/.local/share/applications/kitty*.desktop
+
+            # Crear ícono en el escritorio
+            cp ~/.local/share/applications/kitty.desktop ~/Escritorio/
+            chmod +x ~/Escritorio/kitty.desktop
+
+            print_success "Kitty integrado en el menú de aplicaciones y en el escritorio."
         else
-            print_success "Kitty ya está instalado."
+            print_error "Error instalando Kitty."
         fi
     else
-        print_info "Instalación de Kitty omitida."
+        print_success "Kitty ya está instalado."
     fi
 }
+
+# Verificar si Kitty está instalado y preguntar si se debe instalar
+echo -e "${BLUE}Kitty es un emulador de terminal gráfico rápido y con muchas funciones.${NC}"
+read -p "¿Deseas instalar Kitty en este sistema? (y/n): " install_kitty_choice
+if [[ "$install_kitty_choice" =~ ^[Yy]$ ]]; then
+    install_kitty
+else
+    print_info "Instalación de Kitty omitida."
+fi
 
 # Function to install a font if not already installed
 install_font_if_not_installed() {
