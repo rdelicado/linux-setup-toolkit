@@ -232,5 +232,25 @@ else
     echo "Zsh is already set as the default shell."
 fi
 
-
-
+# Function to install VirtualBox Guest Additions
+install_guest_additions() {
+    print_info "VirtualBox Guest Additions can enhance the performance of your VM."
+    read -p "Would you like to install VirtualBox Guest Additions for Ubuntu/Debian-based systems? (y/n): " install_guest
+    if [[ "$install_guest" == "y" || "$install_guest" == "Y" ]]; then
+        install_if_not_installed build-essential
+        install_if_not_installed dkms
+        install_if_not_installed linux-headers-$(uname -r)
+        print_info "Please insert the VirtualBox Guest Additions CD through the VirtualBox menu."
+        read -p "Press Enter to continue after inserting the CD..."
+        sudo mount /dev/cdrom /media/cdrom
+        sudo sh /media/cdrom/VBoxLinuxAdditions.run
+        if [ $? -eq 0 ]; then
+            print_success "VirtualBox Guest Additions installed successfully."
+        else
+            print_error "Error installing VirtualBox Guest Additions."
+        fi
+        sudo umount /media/cdrom
+    else
+        print_info "Skipping VirtualBox Guest Additions installation."
+    fi
+}
