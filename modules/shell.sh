@@ -22,11 +22,17 @@ install_oh_my_zsh() {
         return 0
     fi
 
-    # Install with expect for automation
-    install_with_expect "Oh My Zsh" \
-        "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
-        "Do you want to change your default shell to zsh?" \
-        "Y"
+    # Run installer in unattended mode to avoid interactive prompts
+    # This prevents the script from asking to change shell or starting zsh
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+    if [[ -d "$HOME/.oh-my-zsh" ]]; then
+        log "SUCCESS" "Oh My Zsh instalado correctamente."
+        return 0
+    else
+        log "ERROR" "Error al instalar Oh My Zsh."
+        return 1
+    fi
 }
 
 # ------------------------------------------------------------------------------

@@ -124,7 +124,7 @@ uninstall_aliases() {
         for alias_pattern in "${aliases[@]}"; do
             if grep -q "alias $alias_pattern" "$zshrc" 2>/dev/null; then
                 sed -i "/alias $alias_pattern/d" "$zshrc"
-                ((removed++))
+                ((removed += 1))
             fi
         done
         log "SUCCESS" "$removed aliases eliminados de .zshrc."

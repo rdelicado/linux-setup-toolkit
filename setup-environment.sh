@@ -51,10 +51,16 @@ done
 # --- 3. Error Handling & Cleanup ---
 cleanup() {
     local exit_code=$?
-    if [ $exit_code -ne 0 ]; then
-        log "ERROR" "La instalación fue interrumpida o falló. Revisa el log: $LOG_FILE"
+    if [ $exit_code -ne 0 ] && [ $exit_code -ne 130 ]; then
+        echo -e "\n${RED}[ERROR] La instalación fue interrumpida o falló (Código: $exit_code).${NC}"
+        
+        if [ -f "$LOG_FILE" ]; then
+            echo -e "${BLUE}[INFO] Revisa el log detallado en: $LOG_FILE${NC}"
+        else
+            echo -e "${YELLOW}[WARN] No se encontró el archivo de log específico: $LOG_FILE${NC}"
+            echo -e "${BLUE}[INFO] Puedes buscar logs recientes con: ls -lh /tmp/linux-setup-*.log${NC}"
+        fi
     fi
-    # Delete only temporary downloads in /tmp if any, not user files
     exit "$exit_code"
 }
 
@@ -133,21 +139,37 @@ show_installation_menu() {
         "Kitty Terminal|Terminal GPU-accelerated"
         "Neovim + NvChad|Editor de texto avanzado"
         "Herramientas Dev|LSD, Batcat y aliases"
+        "⬅️ Volver|Regresar al menú principal"
     )
 
     menu_init "${options[@]}"
 
     if menu_show "Selecciona los componentes a instalar"; then
+        # Verificar si solo se seleccionó "Volver"
+        if [[ ${#MENU_SELECTED[@]} -eq 1 && "${MENU_SELECTED[0]}" == *"Volver"* ]]; then
+            return
+        fi
+
         if [[ ${#MENU_SELECTED[@]} -eq 0 ]]; then
             log "WARN" "No seleccionaste ningún componente."
             return
         fi
 
+        # Filtrar "Volver" de la lista de instalación si se seleccionó junto a otros
+        local final_selections=()
+        for sel in "${MENU_SELECTED[@]}"; do
+            if [[ "$sel" != *"Volver"* ]]; then
+                final_selections+=("$sel")
+            fi
+        done
+
+        if [[ ${#final_selections[@]} -eq 0 ]]; then return; fi
+
         echo ""
-        log "INFO" "Instalando ${#MENU_SELECTED[@]} componente(s) seleccionado(s)..."
+        log "INFO" "Instalando ${#final_selections[@]} componente(s) seleccionado(s)..."
         echo ""
 
-        install_selected_components "${MENU_SELECTED[@]}"
+        install_selected_components "${final_selections[@]}"
 
         # Show completion message
         echo ""
@@ -209,15 +231,31 @@ show_uninstallation_menu() {
         "Kitty Terminal|Eliminar terminal"
         "Neovim + NvChad|Eliminar editor y configuración"
         "Herramientas Dev|Eliminar LSD, Batcat y aliases"
+        "⬅️ Volver|Regresar al menú principal"
     )
 
     menu_init "${options[@]}"
 
     if menu_show "Selecciona los componentes a desinstalar"; then
+        # Verificar si solo se seleccionó "Volver"
+        if [[ ${#MENU_SELECTED[@]} -eq 1 && "${MENU_SELECTED[0]}" == *"Volver"* ]]; then
+            return
+        fi
+
         if [[ ${#MENU_SELECTED[@]} -eq 0 ]]; then
             log "WARN" "No seleccionaste ningún componente."
             return
         fi
+
+        # Filtrar "Volver"
+        local final_selections=()
+        for sel in "${MENU_SELECTED[@]}"; do
+            if [[ "$sel" != *"Volver"* ]]; then
+                final_selections+=("$sel")
+            fi
+        done
+
+        if [[ ${#final_selections[@]} -eq 0 ]]; then return; fi
 
         echo ""
         log "WARN" "Esto eliminará los componentes seleccionados."
@@ -228,10 +266,10 @@ show_uninstallation_menu() {
         fi
 
         echo ""
-        log "INFO" "Desinstalando ${#MENU_SELECTED[@]} componente(s)..."
+        log "INFO" "Desinstalando ${#final_selections[@]} componente(s)..."
         echo ""
 
-        uninstall_selected_components "${MENU_SELECTED[@]}"
+        uninstall_selected_components "${final_selections[@]}"
 
         # Show completion message
         echo ""
@@ -249,44 +287,46 @@ show_uninstallation_menu() {
 
 # --- 7. Main Menu ---
 show_main_menu() {
-    clear
-    echo -e "${BLUE}"
-    echo "  ╔══════════════════════════════════════════════════════════╗"
-    echo " ║  🚀  Linux Setup Toolkit"
-    echo " ║  Automated Development Environment Configuration"
-    echo "  ╚══════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
+    while true; do
+        clear
+        echo -e "${BLUE}  ╔══════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${BLUE}  ║${NC}  🚀 Linux Setup Toolkit                                  ${BLUE}║${NC}"
+        echo -e "${BLUE}  ║${NC}  Automated Development Environment Configuration         ${BLUE}║${NC}"
+        echo -e "${BLUE}  ╚══════════════════════════════════════════════════════════╝${NC}"
+        echo -e "${NC}"
 
-    local options=(
-        "📦 Instalar componentes|Agregar herramientas al sistema"
-        "🗑️  Desinstalar componentes|Eliminar herramientas del sistema"
-        "❌ Salir|Cerrar el programa"
-    )
+        local options=(
+            "📦 Instalar componentes|Agregar herramientas al sistema"
+            "🗑️  Desinstalar componentes|Eliminar herramientas del sistema"
+            "❌ Salir|Cerrar el programa"
+        )
 
-    menu_init "${options[@]}"
+        menu_init "${options[@]}"
 
-    if menu_show "Selecciona una opción"; then
-        local selection="${MENU_SELECTED[0]}"
+        if menu_show "Selecciona una opción"; then
+            local selection="${MENU_SELECTED[0]}"
 
-        case "$selection" in
-            *"Instalar"*)
-                # Step 1: Validation
-                check_requirements
-                # Step 2: Show installation menu
-                show_installation_menu
-                ;;
-            *"Desinstalar"*)
-                show_uninstallation_menu
-                ;;
-            *"Salir"*)
-                log "INFO" "Saliendo de Linux Setup Toolkit."
-                exit 0
-                ;;
-        esac
-
-        # Return to main menu
-        show_main_menu
-    fi
+            case "$selection" in
+                *"Instalar"*)
+                    # Step 1: Validation
+                    check_requirements
+                    # Step 2: Show installation menu
+                    show_installation_menu
+                    ;;
+                *"Desinstalar"*)
+                    show_uninstallation_menu
+                    ;;
+                *"Salir"*)
+                    log "INFO" "Saliendo de Linux Setup Toolkit."
+                    return 0
+                    ;;
+            esac
+        else
+            # Si el usuario pulsa Esc en el menú principal, también salimos
+            log "INFO" "Saliendo de Linux Setup Toolkit."
+            return 0
+        fi
+    done
 }
 
 # --- 8. Main Execution ---
@@ -300,7 +340,7 @@ main() {
     # Final summary (if user exits normally)
     echo ""
     echo -e "${GREEN}  ╔══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN} ║  ✓ Sesión finalizada${NC}"
+    echo -e "${GREEN}  ║  ✓ Sesión finalizada                                     ║${NC}"
     echo -e "${GREEN}  ╚══════════════════════════════════════════════════════════╝${NC}"
     echo ""
     log "SUCCESS" "¡Gracias por usar Linux Setup Toolkit!"

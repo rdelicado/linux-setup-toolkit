@@ -47,6 +47,7 @@ install_desktop_environment() {
         "Lubuntu Desktop (Ligero)|Ligero, mejor rendimiento"
         "LXDE Desktop (Muy ligero)|Ultra ligero, interfaz básica"
         "No instalar entorno gráfico|Solo línea de comandos"
+        "⬅️ Volver|Regresar al menú anterior"
     )
 
     menu_init "${options[@]}"
@@ -70,6 +71,9 @@ install_desktop_environment() {
             *"No instalar"*)
                 log "INFO" "No se instalará ningún entorno gráfico."
                 ;;
+            *"Volver"*)
+                return
+                ;;
         esac
     else
         log "INFO" "Instalación de entorno gráfico cancelada."
@@ -87,6 +91,7 @@ uninstall_desktop_environment() {
         "Xubuntu Core|Eliminar xubuntu-core"
         "Lubuntu Desktop|Eliminar lubuntu-desktop"
         "LXDE Desktop|Eliminar lxde"
+        "⬅️ Volver|Regresar al menú anterior"
     )
 
     menu_init "${options[@]}"
@@ -114,6 +119,9 @@ uninstall_desktop_environment() {
                 log "INFO" "Desinstalando LXDE Desktop..."
                 sudo apt-get remove -y lxde
                 log "SUCCESS" "LXDE Desktop desinstalado."
+                ;;
+            *"Volver"*)
+                return
                 ;;
         esac
     else

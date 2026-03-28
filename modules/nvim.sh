@@ -56,8 +56,8 @@ install_nvchad() {
     fi
 
     # Clone NvChad
-    log "INFO" "Clonando NvChad..."
-    git clone -b v2.5.0 https://github.com/NvChad/NvChad "$nvchad_dir"
+    log "INFO" "Clonando NvChad (rama por defecto)..."
+    git clone https://github.com/NvChad/NvChad "$nvchad_dir" --depth 1
 
     if [[ ! -d "$nvchad_dir" ]]; then
         log "ERROR" "Error al clonar NvChad."

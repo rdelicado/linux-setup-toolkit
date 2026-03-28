@@ -16,18 +16,18 @@ install_nerd_fonts() {
     if install_font "Hack Nerd Font" \
         "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Hack.zip" \
         "Hack-Regular.ttf"; then
-        ((fonts_installed++))
+        ((fonts_installed += 1))
     else
-        ((fonts_failed++))
+        ((fonts_failed += 1))
     fi
 
     # MesloLGS NF
     if install_font "MesloLGS NF" \
         "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/Meslo.zip" \
         "MesloLG.ttf"; then
-        ((fonts_installed++))
+        ((fonts_installed += 1))
     else
-        ((fonts_failed++))
+        ((fonts_failed += 1))
     fi
 
     if [[ $fonts_failed -eq 0 ]]; then
@@ -75,14 +75,14 @@ uninstall_nerd_fonts() {
     if ls "$fonts_dir"/Hack* &>/dev/null; then
         rm -f "$fonts_dir"/Hack*
         log "INFO" "Hack Nerd Font eliminada."
-        ((removed++))
+        ((removed += 1))
     fi
 
     # Remove Meslo fonts
     if ls "$fonts_dir"/Meslo* &>/dev/null; then
         rm -f "$fonts_dir"/Meslo*
         log "INFO" "MesloLGS NF eliminada."
-        ((removed++))
+        ((removed += 1))
     fi
 
     # Refresh font cache

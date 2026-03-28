@@ -1,24 +1,27 @@
 #!/bin/bash
 # ==============================================================================
-# TUI Menu System for Linux Setup Toolkit
-# Professional interactive menu with arrow key and number navigation
+# Sistema de Menú Numerado para Linux Setup Toolkit
+# Basado en selección por teclado numérico para acción rápida
 # ==============================================================================
 
-# Menu state
-declare -g MENU_CURRENT=0
+# Estado del menú
 declare -g MENU_OPTIONS=()
 declare -g MENU_DESCRIPTIONS=()
 declare -g MENU_SELECTED=()
 
+# Colores (asegurarse de que estén disponibles)
+BLUE='\033[0;34m'
+YELLOW='\033[0;33m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
 # ------------------------------------------------------------------------------
-# Initialize a menu with options
-# Arguments: option1|desc1, option2|desc2, ...
+# Inicializar un menú con opciones
 # ------------------------------------------------------------------------------
 menu_init() {
     MENU_OPTIONS=()
     MENU_DESCRIPTIONS=()
-    MENU_CURRENT=0
-
     local IFS='|'
     for item in "$@"; do
         local opt="${item%%|*}"
@@ -29,231 +32,116 @@ menu_init() {
 }
 
 # ------------------------------------------------------------------------------
-# Render the menu interface
-# Arguments: title
+# Renderizar el menú numerado
 # ------------------------------------------------------------------------------
 menu_render() {
     local title="$1"
-    local total=${#MENU_OPTIONS[@]}
-
+    local multi_select="$2"
+    
     clear
-    echo -e "${BLUE}"
-    echo "  ╔══════════════════════════════════════════════════════════╗"
-    echo " ║  ${title}"
-    echo "  ╠══════════════════════════════════════════════════════════╣"
-    echo -e "${NC}"
+    echo -e "${BLUE}  ╔══════════════════════════════════════════════════════════╗${NC}"
+    printf "${BLUE}  ║${NC}  %-54s  ${BLUE}║${NC}\n" "$title"
+    echo -e "${BLUE}  ╠══════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${BLUE}  ║                                                          ║${NC}"
 
     for i in "${!MENU_OPTIONS[@]}"; do
+        local num=$((i + 1))
         local option="${MENU_OPTIONS[$i]}"
         local desc="${MENU_DESCRIPTIONS[$i]}"
-        local indicator="  "
-        local prefix="  "
-        local style="${NC}"
-
-        if [[ $i -eq $MENU_CURRENT ]]; then
-            indicator="❯ "
-            prefix="→ "
-            style="${YELLOW}"
+        
+        # Marca de selección para menús múltiples
+        local mark=""
+        if [[ "$multi_select" == "true" ]]; then
+            mark="[ ] "
+            for sel in "${MENU_SELECTED[@]}"; do
+                if [[ "$sel" == "$option" ]]; then
+                    mark="[✓] "
+                    break
+                fi
+            done
         fi
 
-        # Check if already selected
-        local selected_mark=" "
-        for sel in "${MENU_SELECTED[@]}"; do
-            if [[ "$sel" == "$option" ]]; then
-                selected_mark="✓"
-                break
-            fi
-        done
-
-        echo -e "${style}${indicator}[${selected_mark}] ${prefix}${option}${NC}"
-        echo -e "${style}     ${desc}${NC}"
-        echo ""
+        # Imprimir línea de opción
+        printf "${BLUE}  ║${NC}  ${YELLOW}%2d.${NC} %s%-45s ${BLUE}║${NC}\n" "$num" "$mark" "$option"
+        printf "${BLUE}  ║${NC}      ${NC}%-50s  ${BLUE}║${NC}\n" "$desc"
+        echo -e "${BLUE}  ║                                                          ║${NC}"
     done
 
     echo -e "${BLUE}  ╠══════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${YELLOW}  │  ↑/↓ : Navegar   │   Space : Seleccionar   │   1-9 : Toggle${NC}"
-    echo -e "${YELLOW}  │   A : Todos   │   N : Ninguno   │   Enter : Confirmar${NC}"
+    if [[ "$multi_select" == "true" ]]; then
+        echo -e "${YELLOW}  ║  Número: Marcar/Desmarcar      │  Enter: Confirmar todo  ║${NC}"
+    else
+        echo -e "${YELLOW}  ║  Pulsa el número de la opción para ejecutar              ║${NC}"
+    fi
     echo -e "${BLUE}  ╚══════════════════════════════════════════════════════════╝${NC}"
 }
 
 # ------------------------------------------------------------------------------
-# Handle single-key input (arrow keys support)
-# Returns: 0=confirmed, 1=cancelled, 2=continue
-# ------------------------------------------------------------------------------
-menu_get_input() {
-    local key
-    local total=${#MENU_OPTIONS[@]}
-
-    # Read single character
-    read -rs -n1 key
-
-    # Handle escape sequences (arrow keys)
-    if [[ "$key" == $'\x1b' ]]; then
-        read -rs -n2 -t 0.1 key
-        case "$key" in
-            '[A') # Up arrow
-                ((MENU_CURRENT--))
-                [[ $MENU_CURRENT -lt 0 ]] && MENU_CURRENT=$((total - 1))
-                ;;
-            '[B') # Down arrow
-                ((MENU_CURRENT++))
-                [[ $MENU_CURRENT -ge $total ]] && MENU_CURRENT=0
-                ;;
-        esac
-        return 2  # Continue
-    fi
-
-    case "$key" in
-        $'\r'|$'\n')  # Enter - confirm
-            return 0
-            ;;
-        $'\x1b')  # Escape - cancel
-            return 1
-            ;;
-        ' ')  # Space - toggle selection
-            local current_opt="${MENU_OPTIONS[$MENU_CURRENT]}"
-            local found=0
-            local new_selected=()
-            for sel in "${MENU_SELECTED[@]}"; do
-                if [[ "$sel" == "$current_opt" ]]; then
-                    found=1
-                else
-                    new_selected+=("$sel")
-                fi
-            done
-            if [[ $found -eq 0 ]]; then
-                new_selected+=("$current_opt")
-            fi
-            MENU_SELECTED=("${new_selected[@]}")
-            return 2
-            ;;
-        a|A)  # Select all
-            MENU_SELECTED=("${MENU_OPTIONS[@]}")
-            return 2
-            ;;
-        n|N)  # Deselect all
-            MENU_SELECTED=()
-            return 2
-            ;;
-        [0-9])  # Number selection - toggle and continue
-            local num=$((10#$key - 1))
-            if [[ $num -ge 0 && $num -lt $total ]]; then
-                MENU_CURRENT=$num
-                local current_opt="${MENU_OPTIONS[$MENU_CURRENT]}"
-                # Toggle selection
-                local found=0
-                local new_selected=()
-                for sel in "${MENU_SELECTED[@]}"; do
-                    if [[ "$sel" == "$current_opt" ]]; then
-                        found=1
-                    else
-                        new_selected+=("$sel")
-                    fi
-                done
-                if [[ $found -eq 0 ]]; then
-                    new_selected+=("$current_opt")
-                fi
-                MENU_SELECTED=("${new_selected[@]}")
-            fi
-            return 2
-            ;;
-    esac
-
-    return 2  # Continue
-}
-
-# ------------------------------------------------------------------------------
-# Display menu and get selection
-# Arguments: title
-# Returns: Sets MENU_SELECTED array with selected options
+# Mostrar menú y capturar selección
+# Arguments: title, multi_select (true/false)
 # ------------------------------------------------------------------------------
 menu_show() {
     local title="$1"
-    local input_result
+    local multi_select="${2:-false}"
+    MENU_SELECTED=()
 
     while true; do
-        menu_render "$title"
-        menu_get_input
-        input_result=$?
-
-        if [[ $input_result -eq 0 ]]; then
-            # Confirmed with Enter
-            if [[ ${#MENU_SELECTED[@]} -eq 0 ]]; then
-                # If nothing selected with space, use current highlighted option
-                MENU_SELECTED=("${MENU_OPTIONS[$MENU_CURRENT]}")
-            fi
-            return 0
-        elif [[ $input_result -eq 1 ]]; then
-            # Cancelled with Escape
+        menu_render "$title" "$multi_select"
+        
+        # Leer una sola tecla
+        read -rsn1 key
+        
+        # Salir si es Esc
+        if [[ "$key" == $'\x1b' ]]; then
             MENU_SELECTED=()
             return 1
         fi
-        # Continue loop for other inputs
+
+        # Confirmar si es Enter (solo para multi-select)
+        if [[ "$key" == "" && "$multi_select" == "true" ]]; then
+            [[ ${#MENU_SELECTED[@]} -gt 0 ]] && return 0
+            continue
+        fi
+
+        # Procesar número
+        if [[ "$key" =~ [1-9] ]]; then
+            local idx=$((key - 1))
+            if [[ $idx -lt ${#MENU_OPTIONS[@]} ]]; then
+                local opt="${MENU_OPTIONS[$idx]}"
+                
+                if [[ "$multi_select" == "true" ]]; then
+                    # Toggle selección
+                    local new_selected=()
+                    local found=0
+                    for sel in "${MENU_SELECTED[@]}"; do
+                        if [[ "$sel" == "$opt" ]]; then
+                            found=1
+                        else
+                            new_selected+=("$sel")
+                        fi
+                    done
+                    [[ $found -eq 0 ]] && new_selected+=("$opt")
+                    MENU_SELECTED=("${new_selected[@]}")
+                else
+                    # Selección directa e instantánea
+                    MENU_SELECTED=("$opt")
+                    return 0
+                fi
+            fi
+        fi
     done
 }
 
-# ------------------------------------------------------------------------------
-# Simple numbered menu (non-interactive, just display + input)
-# Arguments: title, option1, option2, ...
-# Returns: Selected option index in MENU_RESULT
-# ------------------------------------------------------------------------------
-menu_numbered() {
-    local title="$1"
-    shift
-    local options=("$@")
-
-    clear
-    echo -e "${BLUE}"
-    echo "  ╔══════════════════════════════════════════════════════════╗"
-    echo " ║  ${title}"
-    echo "  ╠══════════════════════════════════════════════════════════╣"
-    echo -e "${NC}"
-
-    for i in "${!options[@]}"; do
-        printf "  ${YELLOW}%d.${NC} %s\n" $((i + 1)) "${options[$i]}"
-    done
-
-    echo -e "${BLUE}  ╚══════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-}
-
-# ------------------------------------------------------------------------------
-# Confirmation dialog
-# Arguments: message
-# Returns: 0=yes, 1=no
-# ------------------------------------------------------------------------------
+# Funciones auxiliares mantenidas por compatibilidad
 menu_confirm() {
     local message="$1"
-    local response
-
-    echo -e "${YELLOW}?${NC} $message ${BLUE}[y/N]${NC}: "
+    echo -ne "${YELLOW}?${NC} $message ${BLUE}[y/N]${NC}: "
     read -r response
-
-    case "$response" in
-        [yY][eE][sS]|[yY])
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
+    [[ "$response" =~ ^[yY](es)?$ ]] && return 0 || return 1
 }
 
-# ------------------------------------------------------------------------------
-# Progress bar display
-# Arguments: current, total, message
-# ------------------------------------------------------------------------------
 menu_progress() {
-    local current=$1
-    local total=$2
-    local message="$3"
-    local bar_width=40
-    local filled=$((current * bar_width / total))
-    local empty=$((bar_width - filled))
-
-    printf "\r  ${BLUE}[%s${NC}" "${GREEN}"
-    printf "%${filled}s" | tr ' ' '█'
-    printf "${BLUE}%s]${NC} " "${NC}"
-    printf "%${empty}s" | tr ' ' '░'
-    printf " %3d%% - %s" $((current * 100 / total)) "$message"
+    local current=$1 total=$2 message="$3"
+    local filled=$((current * 40 / total))
+    printf "\r  ${BLUE}[${GREEN}%-40s${BLUE}] %d%% - %s${NC}" "$(printf "%${filled}s" | tr ' ' '█')" "$((current * 100 / total))" "$message"
 }

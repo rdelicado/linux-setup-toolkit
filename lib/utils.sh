@@ -3,12 +3,18 @@
 
 # Function to install a package if not already installed
 install_if_not_installed() {
-    local package=$1
-    local install_command=$2
+    local package="${1:-}"
+    local install_command="${2:-sudo apt-get install -y $package}"
+
+    if [ -z "$package" ]; then
+        log "ERROR" "No se especificó el nombre del paquete para instalar."
+        return 1
+    fi
 
     if ! dpkg -l | grep -qw "$package" &>/dev/null; then
         log "INFO" "Instalando $package..."
-        sudo apt-get update && sudo apt-get install -y "$package"
+        # Execute provided or default command
+        eval "$install_command"
         if [ $? -eq 0 ]; then
             log "SUCCESS" "$package instalado."
         else
