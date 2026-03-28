@@ -88,59 +88,99 @@ chmod +x setup-environment.sh
 ./setup-environment.sh
 ```
 
-### Advanced Installation Options
+### Module Architecture
+
+Each module is designed to be **independently callable** and follows strict error handling:
 
 ```bash
-# Run with specific environment
-DESKTOP_ENV=xubuntu ./setup-environment.sh
+# Source the main script to load all modules
+source setup-environment.sh
 
-# Headless installation (no GUI prompts)
-HEADLESS=true ./setup-environment.sh
+# Call individual module functions
+install_nerd_fonts           # Install all Nerd Fonts
+install_shell_stack          # Complete ZSH setup
+install_kitty_full           # Kitty + configuration
+install_nvchad_full          # Neovim + NvChad
+install_dev_tools            # LSD, Batcat, aliases
 
-# Custom installation directory
-INSTALL_DIR=/opt ./setup-environment.sh
-
-# Debug mode with verbose output
-DEBUG=true ./setup-environment.sh
+# Or install specific components
+install_zsh
+install_powerlevel10k
+install_zsh_autosuggestions
+install_zsh_syntax_highlighting
 ```
 
 ## 🚀 Usage
 
-### Interactive Setup Process
+### Interactive TUI Menu
 
-The script provides an interactive menu for desktop environment selection:
+The script provides a **professional terminal user interface (TUI)** with keyboard navigation:
 
 ```
-Selecciona un entorno gráfico para instalar:
-1. Xubuntu Desktop (Completo)
-   (Más pesado, más funciones)
-2. Xubuntu Core (Minimal)
-   (Más ligero, menos funciones)
-3. Lubuntu Desktop (Ligero)
-   (Ligero, mejor rendimiento)
-4. LXDE Desktop (Muy ligero)
-   (Muy ligero, interfaz básica)
-5. No instalar entorno gráfico
+  ╔══════════════════════════════════════════════════════════╗
+ ║  🚀 Linux Setup Toolkit - Selección de Componentes
+  ╠══════════════════════════════════════════════════════════╣
 
-Ingresa tu elección (1/2/3/4/5):
+ ❯ [ ] Entorno Gráfico
+     Xubuntu, Lubuntu, LXDE o ninguno
+
+   [ ] Nerd Fonts
+     Hack y MesloLGS para terminal
+
+   [ ] ZSH + Powerlevel10k
+     Shell moderno con autocompletado
+
+   [ ] Kitty Terminal
+     Terminal GPU-accelerated
+
+   [ ] Neovim + NvChad
+     Editor de texto avanzado
+
+   [ ] Herramientas Dev
+     LSD, Batcat y aliases
+
+  ╠══════════════════════════════════════════════════════════╣
+  │  ↑/↓ : Navegar   │   Space : Seleccionar   │   1-9 : Toggle
+  │   A : Todos   │   N : Ninguno   │   Enter : Confirmar
+  ╚══════════════════════════════════════════════════════════╝
 ```
+
+### Navigation Controls
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Navigate through options |
+| `Space` | Toggle selection of current option |
+| `1-9` | Quick toggle by number |
+| `A` | Select all options |
+| `N` | Deselect all |
+| `Enter` | Confirm and install selected |
+| `Esc` | Cancel |
 
 ### Installation Progress Tracking
 
 ```bash
 # Example installation output with colorized feedback
-Installing zsh...
-✅ zsh installed.
+[INFO] 2026-03-28 10:30:00 - Instalando ZSH...
+[SUCCESS] 2026-03-28 10:30:05 - zsh instalado.
 
-Installing Oh My Zsh...
-✅ Oh My Zsh installed and configured.
+[INFO] 2026-03-28 10:30:06 - Instalando Oh My Zsh...
+[SUCCESS] 2026-03-28 10:30:15 - Oh My Zsh instalado y configurado.
 
-Installing Hack Nerd Font...
-✅ Hack Nerd Font installed.
-
-Installing Powerlevel10k...
-✅ Powerlevel10k installed and configured.
+[INFO] 2026-03-28 10:30:16 - Instalando Nerd Fonts...
+[SUCCESS] 2026-03-28 10:30:25 - Nerd Fonts instaladas correctamente.
 ```
+
+### Available Modules
+
+| Module | Description | Components |
+|--------|-------------|------------|
+| `desktop.sh` | Desktop environments | Xubuntu, Lubuntu, LXDE |
+| `shell.sh` | Shell configuration | ZSH, Oh My Zsh, Powerlevel10k, autosuggestions, syntax highlighting |
+| `fonts.sh` | Font installation | Hack Nerd Font, MesloLGS NF |
+| `tools.sh` | Dev tools | Neovim, LSD, Batcat, aliases |
+| `kitty.sh` | Terminal emulator | Kitty + GPU configuration |
+| `nvim.sh` | Neovim config | NvChad v2.5.0 + custom settings |
 
 ### Post-Installation Configuration
 
@@ -164,18 +204,39 @@ vi    # Opens Neovim
 ```
 linux-setup-toolkit/
 ├── README.md                       # Project documentation
-├── setup-environment.sh           # Main installation script
-├── configs/                        # Configuration files (future)
-│   ├── .zshrc.template            # Zsh configuration template
-│   ├── neovim/                    # Neovim configurations
-│   └── aliases/                   # Custom alias definitions
-└── scripts/                       # Additional utilities (future)
-    ├── backup.sh                  # Configuration backup
-    ├── restore.sh                 # Configuration restore
-    └── update.sh                  # Update installed tools
+├── setup-environment.sh           # Main orchestrator with TUI menu
+├── lib/                           # Core libraries
+│   ├── colors.sh                  # Color codes and logging system
+│   ├── utils.sh                   # Utility functions (install_if_not_installed, etc.)
+│   └── menu.sh                    # Interactive TUI menu system
+└── modules/                       # Installation modules
+    ├── desktop.sh                 # Desktop environments (Xubuntu, Lubuntu, LXDE)
+    ├── shell.sh                   # ZSH, Oh My Zsh, Powerlevel10k, plugins
+    ├── fonts.sh                   # Nerd Fonts (Hack, MesloLGS)
+    ├── tools.sh                   # Development tools (LSD, Batcat, aliases)
+    ├── kitty.sh                   # Kitty terminal emulator
+    └── nvim.sh                    # Neovim with NvChad configuration
 ```
 
 ## 🏗️ Technical Implementation
+
+### Logging System
+
+The toolkit uses a centralized logging system with timestamp and level-based output:
+
+```bash
+# Log levels: INFO, SUCCESS, WARN, ERROR
+log "INFO" "Instalando paquete..."
+log "SUCCESS" "Paquete instalado correctamente."
+log "WARN" "Advertencia sobre configuración."
+log "ERROR" "Error crítico - salida del script."
+
+# Output format:
+# [INFO] 2026-03-28 10:30:00 - Mensaje informativo
+# [SUCCESS] 2026-03-28 10:30:05 - Operación completada
+# [WARN] 2026-03-28 10:30:10 - Advertencia
+# [ERROR] 2026-03-28 10:30:15 - Error crítico (stderr)
+```
 
 ### Core Installation Functions
 
@@ -186,16 +247,17 @@ install_if_not_installed() {
     local package=$1
     local install_command=$2
 
-    if ! dpkg -l | grep -qw $package; then
-        echo "Installing $package..."
-        sudo apt-get update && sudo apt-get install -y $package
+    if ! dpkg -l | grep -qw "$package" &>/dev/null; then
+        log "INFO" "Instalando $package..."
+        sudo apt-get update && sudo apt-get install -y "$package"
         if [ $? -eq 0 ]; then
-            print_success "$package installed."
+            log "SUCCESS" "$package instalado."
         else
-            print_error "Error installing $package."
+            log "ERROR" "Error instalando $package."
+            return 1
         fi
     else
-        print_success "$package is already installed."
+        log "SUCCESS" "$package ya está instalado."
     fi
 }
 ```
